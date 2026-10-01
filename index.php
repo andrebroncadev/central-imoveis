@@ -100,12 +100,11 @@ $bairros = array_values(array_unique(array_filter(array_map(fn($x) => trim((stri
 <?php
 $fotos = is_array($imovel['fotos'] ?? null) ? $imovel['fotos'] : [];
 $fotoPrincipal = $fotos[0]['url'] ?? null;
+$galleryUrl = !empty($imovel['id']) ? gallery_url((int)$imovel['id']) : '';
 $whatsText = "Olá! Estou consultando o imóvel " . ($imovel['codigo'] ?? '') . " - " . ($imovel['nome'] ?? '') . ".";
 if (!empty($imovel['bairro'])) $whatsText .= " Bairro: " . $imovel['bairro'] . ".";
 if (!empty($imovel['diaria']) && (float)$imovel['diaria'] > 0) $whatsText .= " Diária base: R$ " . number_format((float)$imovel['diaria'], 2, ',', '.') . ".";
-foreach ($fotos as $foto) {
-    if (!empty($foto['url'])) $whatsText .= "\n" . $foto['url'];
-}
+if ($galleryUrl !== '') $whatsText .= "\nFotos do imóvel: " . $galleryUrl;
 $whatsUrl = 'https://wa.me/?text=' . rawurlencode($whatsText);
 ?>
 <article class="card <?= !($imovel['ativo'] ?? true) ? 'inativo' : '' ?>">
@@ -132,7 +131,7 @@ $whatsUrl = 'https://wa.me/?text=' . rawurlencode($whatsText);
 <?php if ((float)($imovel['diaria'] ?? 0) > 0): ?><p><strong>Diária:</strong> R$ <?= number_format((float)$imovel['diaria'], 2, ',', '.') ?></p><?php endif; ?>
 </div>
 <div class="acoes">
-<?php if ($fotos): ?><a class="botao whatsapp" href="<?= e($whatsUrl) ?>" target="_blank" rel="noopener">WhatsApp</a><?php endif; ?>
+<?php if ($fotos): ?><a class="botao" href="<?= e($galleryUrl) ?>" target="_blank" rel="noopener">📸 Fotos</a><a class="botao whatsapp" href="<?= e($whatsUrl) ?>" target="_blank" rel="noopener">WhatsApp</a><?php endif; ?>
 <a class="botao secundario" href="editar.php?id=<?= (int)$imovel['id'] ?>">Editar</a>
 <form action="excluir.php" method="POST" onsubmit="return confirm('Excluir este imóvel permanentemente?')">
 <?= csrf_field() ?>
