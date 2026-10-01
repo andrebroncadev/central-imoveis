@@ -20,7 +20,7 @@ $error = flash('error');
 <?php if ($error): ?><div class="alerta erro"><?= e($error) ?></div><?php endif; ?>
 <form action="autenticar.php" method="POST" class="formulario">
 <?= csrf_field() ?>
-<label>Usuário<input type="text" name="username" autocomplete="username" required></label>
+<label>E-mail<input type="email" name="username" autocomplete="username" required></label>
 <label>Senha<input type="password" name="password" autocomplete="current-password" required></label>
 <button class="botao" type="submit">Entrar</button>
 </form>
