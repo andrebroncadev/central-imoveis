@@ -50,6 +50,9 @@ $bairros = array_values(array_unique(array_filter(array_map(fn($x) => trim((stri
 </div>
 </header>
 
+<?php if ($message = flash('success')): ?><div class="alerta sucesso"><?= e($message) ?></div><?php endif; ?>
+<?php if ($message = flash('error')): ?><div class="alerta erro"><?= e($message) ?></div><?php endif; ?>
+
 <section class="painel">
 <form class="filtros" method="GET">
 <div class="campo-busca">
