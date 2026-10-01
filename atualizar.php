@@ -25,7 +25,7 @@ try {
     foreach ((array)($_POST['remover_foto'] ?? []) as $path) {
         $path = (string)$path;
         foreach ($fotos as $key => $foto) {
-            if (($foto['path'] ?? '') === $path) {
+            if (($foto['public_id'] ?? $foto['path'] ?? '') === $path) {
                 delete_property_photo($path);
                 unset($fotos[$key]);
             }
