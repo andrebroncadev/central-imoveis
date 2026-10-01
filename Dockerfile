@@ -1,5 +1,5 @@
 FROM php:8.3-apache
-RUN docker-php-ext-install opcache && mkdir -p /tmp/php-sessions && chown www-data:www-data /tmp/php-sessions && printf '%s\n' 'upload_max_filesize=10M' 'post_max_size=60M' 'max_file_uploads=20' > /usr/local/etc/php/conf.d/uploads.ini
+RUN docker-php-ext-install opcache && mkdir -p /tmp/php-sessions && chown www-data:www-data /tmp/php-sessions && printf '%s\n' 'upload_max_filesize=100M' 'post_max_size=512M' 'max_file_uploads=100' > /usr/local/etc/php/conf.d/uploads.ini
 COPY . /var/www/html/
 RUN a2enmod rewrite headers expires
 RUN printf '%s\n' '<IfModule mod_headers.c>' 'Header always set X-Content-Type-Options "nosniff"' 'Header always set Referrer-Policy "strict-origin-when-cross-origin"' 'Header always set X-Frame-Options "SAMEORIGIN"' '</IfModule>' > /etc/apache2/conf-available/security-headers.conf && a2enconf security-headers
