@@ -70,7 +70,7 @@ if (!$imovel) {
 <?php foreach ($fotos as $foto): ?>
 <label class="foto-editavel">
 <img src="<?= e($foto['url'] ?? '') ?>" alt="Foto do imóvel">
-<span><input type="checkbox" name="remover_foto[]" value="<?= e($foto['path'] ?? '') ?>"> Remover</span>
+<span><input type="checkbox" name="remover_foto[]" value="<?= e($foto['public_id'] ?? $foto['path'] ?? '') ?>"> Remover</span>
 </label>
 <?php endforeach; ?>
 </div>
