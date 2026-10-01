@@ -1,0 +1,7 @@
+banco/*.sqlite
+banco/*.db
+fotos/*
+!fotos/.gitkeep
+.vscode/
+*.log
+.DS_Store
