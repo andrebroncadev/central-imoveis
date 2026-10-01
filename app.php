@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 
+session_save_path('/tmp/php-sessions');
 session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'secure' => true,
     'httponly' => true,
-    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
     'samesite' => 'Lax',
 ]);
 session_start();
