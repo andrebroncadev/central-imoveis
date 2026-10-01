@@ -30,7 +30,7 @@ if (!$imovel) {
 <p class="subtitulo"><strong><?= e($imovel['codigo']) ?></strong> · <?= e($imovel['nome']) ?></p>
 <?php if ($error = flash('error')): ?><div class="alerta erro"><?= e($error) ?></div><?php endif; ?>
 
-<form action="atualizar.php" method="POST" class="formulario">
+<form action="atualizar.php" method="POST" enctype="multipart/form-data" class="formulario">
 <?= csrf_field() ?>
 <input type="hidden" name="id" value="<?= (int)$imovel['id'] ?>">
 <div class="grid">
@@ -61,6 +61,22 @@ if (!$imovel) {
 <label><input type="checkbox" name="churrasqueira" <?= !empty($imovel['churrasqueira']) ? 'checked' : '' ?>> Churrasqueira</label>
 <label><input type="checkbox" name="ar_condicionado" <?= !empty($imovel['ar_condicionado']) ? 'checked' : '' ?>> Ar-condicionado</label>
 </div>
+
+<section class="fotos-editor">
+<div class="secao-titulo"><div><span class="eyebrow">IMAGENS</span><h2>Fotos do imóvel</h2><p>Escolha as fotos que você quer deixar na ficha.</p></div></div>
+<?php $fotos = is_array($imovel['fotos'] ?? null) ? $imovel['fotos'] : []; ?>
+<?php if ($fotos): ?>
+<div class="galeria-editavel">
+<?php foreach ($fotos as $foto): ?>
+<label class="foto-editavel">
+<img src="<?= e($foto['url'] ?? '') ?>" alt="Foto do imóvel">
+<span><input type="checkbox" name="remover_foto[]" value="<?= e($foto['path'] ?? '') ?>"> Remover</span>
+</label>
+<?php endforeach; ?>
+</div>
+<?php endif; ?>
+<label class="upload-box"><span class="upload-icone">＋</span><span><strong>Adicionar fotos</strong><small>JPG, PNG ou WEBP · até 10 MB por foto</small></span><input type="file" name="fotos[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple></label>
+</section>
 <label>Diária base<input type="number" name="diaria" min="0" step="0.01" value="<?= e($imovel['diaria']) ?>"></label>
 <label>Descrição<textarea name="descricao" rows="7"><?= e($imovel['descricao']) ?></textarea></label>
 <label class="check-unico"><input type="checkbox" name="ativo" <?= !empty($imovel['ativo']) ? 'checked' : '' ?>> Imóvel ativo</label>
