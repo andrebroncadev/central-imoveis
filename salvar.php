@@ -11,7 +11,17 @@ if ($data['codigo'] === '' || $data['nome'] === '') {
 }
 
 try {
-    supabase_request('POST', '/rest/v1/imoveis', $data, ['Prefer: return=minimal']);
+    $created = supabase_request('POST', '/rest/v1/imoveis', $data, ['Prefer: return=representation']);
+    $imovel = is_array($created) ? ($created[0] ?? null) : null;
+    $id = (int)($imovel['id'] ?? 0);
+
+    if ($id > 0 && isset($_FILES['fotos'])) {
+        $fotos = upload_property_photos($id, $_FILES['fotos']);
+        if ($fotos) {
+            supabase_request('PATCH', '/rest/v1/imoveis?id=eq.' . $id, ['fotos' => $fotos], ['Prefer: return=minimal']);
+        }
+    }
+
     flash('success', 'Imóvel cadastrado com sucesso.');
     redirect('index.php');
 } catch (Throwable $e) {
