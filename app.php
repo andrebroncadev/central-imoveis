@@ -165,7 +165,6 @@ function cloudinary_request(array $params, string $filePath, string $mime): arra
     $timestamp = time();
     $params['timestamp'] = $timestamp;
 
-    // Cloudinary does not include file, cloud_name, resource_type or api_key in the signature.
     $paramsToSign = $params;
     $params['api_key'] = $key;
     $params['signature'] = cloudinary_signature($paramsToSign, $secret);
@@ -179,7 +178,7 @@ function cloudinary_request(array $params, string $filePath, string $mime): arra
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $post,
-        CURLOPT_TIMEOUT => 120,
+        CURLOPT_TIMEOUT => 300,
         CURLOPT_CONNECTTIMEOUT => 10,
     ]);
     $raw = curl_exec($ch);
@@ -213,13 +212,17 @@ function upload_property_photos(int $propertyId, array $files): array {
     if (!isset($files['name']) || !is_array($files['name'])) return [];
 
     $count = count($files['name']);
+    if ($count > 100) {
+        throw new RuntimeException('Você pode enviar até 100 fotos por vez.');
+    }
+
     for ($i = 0; $i < $count; $i++) {
         if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
         if (($files['error'][$i] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Uma das fotos não pôde ser enviada.');
+            throw new RuntimeException('Uma das fotos não pôde ser enviada. Tente novamente.');
         }
-        if (($files['size'][$i] ?? 0) > 10 * 1024 * 1024) {
-            throw new RuntimeException('Cada foto pode ter no máximo 10 MB.');
+        if (($files['size'][$i] ?? 0) > 100 * 1024 * 1024) {
+            throw new RuntimeException('Cada foto pode ter no máximo 100 MB.');
         }
 
         $tmp = $files['tmp_name'][$i] ?? '';
@@ -308,6 +311,26 @@ function delete_property_photo(string $path): void {
         $message = is_array($detail) ? ($detail['error']['message'] ?? '') : '';
         throw new RuntimeException($message ?: ($error ?: 'Não foi possível remover a foto do Cloudinary.'));
     }
+}
+
+function gallery_token(int $propertyId): string {
+    $secret = (string)(env('SHARE_SECRET') ?: env('SUPABASE_SERVER_KEY'));
+    return hash_hmac('sha256', (string)$propertyId, $secret);
+}
+
+function gallery_url(int $propertyId): string {
+    $base = trim((string)env('APP_URL', ''));
+    if ($base === '') {
+        $forwarded = strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+        $https = $forwarded === 'https' || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+        $base = ($https ? 'https' : 'http') . '://' . $host;
+    }
+    return rtrim($base, '/') . '/fotos.php?id=' . $propertyId . '&t=' . gallery_token($propertyId);
+}
+
+function verify_gallery_token(int $propertyId, string $token): bool {
+    return $token !== '' && hash_equals(gallery_token($propertyId), $token);
 }
 
 function friendly_api_error(Throwable $e): string {
