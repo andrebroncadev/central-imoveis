@@ -8,11 +8,11 @@ $ativo = $_GET['ativo'] ?? '1';
 
 $filters = [];
 if ($q !== '') {
-    $safe = str_replace(['*', '(', ')', ','], ['%2A', '%28', '%29', '%2C'], $q);
+    $safe = rawurlencode($q);
     $filters[] = 'or=(codigo.ilike.*' . $safe . '*,nome.ilike.*' . $safe . '*,bairro.ilike.*' . $safe . '*,proprietario.ilike.*' . $safe . '*)';
 }
 if ($bairro !== '') {
-    $safe = str_replace(['*', '(', ')', ','], ['%2A', '%28', '%29', '%2C'], $bairro);
+    $safe = rawurlencode($bairro);
     $filters[] = 'bairro=ilike.*' . $safe . '*';
 }
 if ($ativo === '1') {
