@@ -164,11 +164,11 @@ function cloudinary_request(array $params, string $filePath, string $mime): arra
 
     $timestamp = time();
     $params['timestamp'] = $timestamp;
+
+    // Cloudinary does not include file, cloud_name, resource_type or api_key in the signature.
+    $paramsToSign = $params;
     $params['api_key'] = $key;
-    $params['signature'] = cloudinary_signature(
-        array_filter($params, static fn($value) => $value !== null && $value !== ''),
-        $secret
-    );
+    $params['signature'] = cloudinary_signature($paramsToSign, $secret);
 
     $post = [];
     foreach ($params as $name => $value) $post[$name] = $value;
