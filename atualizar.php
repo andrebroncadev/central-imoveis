@@ -10,6 +10,10 @@ if (!$id) {
     redirect('index.php');
 }
 
+$rows = supabase_request('GET', '/rest/v1/imoveis?select=fotos&id=eq.' . $id . '&limit=1');
+$imovel = $rows[0] ?? [];
+$fotos = is_array($imovel['fotos'] ?? null) ? $imovel['fotos'] : [];
+
 $data = property_data($_POST);
 if ($data['codigo'] === '' || $data['nome'] === '') {
     flash('error', 'Código e nome são obrigatórios.');
@@ -18,6 +22,22 @@ if ($data['codigo'] === '' || $data['nome'] === '') {
 $data['updated_at'] = date('c');
 
 try {
+    foreach ((array)($_POST['remover_foto'] ?? []) as $path) {
+        $path = (string)$path;
+        foreach ($fotos as $key => $foto) {
+            if (($foto['path'] ?? '') === $path) {
+                delete_property_photo($path);
+                unset($fotos[$key]);
+            }
+        }
+    }
+
+    $fotos = array_values($fotos);
+    if (isset($_FILES['fotos'])) {
+        $fotos = array_merge($fotos, upload_property_photos($id, $_FILES['fotos']));
+    }
+
+    $data['fotos'] = $fotos;
     supabase_request('PATCH', '/rest/v1/imoveis?id=eq.' . $id, $data, ['Prefer: return=minimal']);
     flash('success', 'Imóvel atualizado com sucesso.');
     redirect('index.php');
