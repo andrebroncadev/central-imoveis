@@ -137,6 +137,97 @@ function property_data(array $input): array {
     ];
 }
 
+function upload_property_photos(int $propertyId, array $files): array {
+    $base = rtrim((string)env('SUPABASE_URL'), '/');
+    $key = (string)env('SUPABASE_SERVER_KEY');
+    if ($base === '' || $key === '') throw new RuntimeException('Storage não está configurado.');
+
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+    $uploaded = [];
+
+    if (!isset($files['name']) || !is_array($files['name'])) return [];
+
+    $count = count($files['name']);
+    for ($i = 0; $i < $count; $i++) {
+        if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
+        if (($files['error'][$i] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) throw new RuntimeException('Uma das fotos não pôde ser enviada.');
+        if (($files['size'][$i] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('Cada foto pode ter no máximo 10 MB.');
+
+        $tmp = $files['tmp_name'][$i] ?? '';
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmp);
+        if (!isset($allowed[$mime]) || @getimagesize($tmp) === false) {
+            throw new RuntimeException('Envie apenas fotos JPG, PNG, WEBP ou GIF.');
+        }
+
+        $path = 'imoveis/' . $propertyId . '/' . bin2hex(random_bytes(12)) . '.' . $allowed[$mime];
+        $binary = file_get_contents($tmp);
+        if ($binary === false) throw new RuntimeException('Não foi possível ler uma das fotos.');
+
+        $ch = curl_init($base . '/storage/v1/object/' . $path);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $key,
+                'apikey: ' . $key,
+                'Content-Type: ' . $mime,
+                'Cache-Control: max-age=31536000',
+                'x-upsert: false',
+            ],
+            CURLOPT_POSTFIELDS => $binary,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        if ($raw === false || $status < 200 || $status >= 300) {
+            $detail = is_string($raw) ? json_decode($raw, true) : null;
+            $message = is_array($detail) ? ($detail['message'] ?? $detail['error'] ?? '') : '';
+            throw new RuntimeException($message ?: ($error ?: 'Falha ao enviar uma foto.'));
+        }
+
+        $uploaded[] = [
+            'path' => $path,
+            'url' => $base . '/storage/v1/object/public/' . $path,
+        ];
+    }
+
+    return $uploaded;
+}
+
+function delete_property_photo(string $path): void {
+    if (!preg_match('#^imoveis/[0-9]+/[a-f0-9]{24}\.(jpg|png|webp|gif)$#', $path)) {
+        throw new RuntimeException('Foto inválida.');
+    }
+
+    $base = rtrim((string)env('SUPABASE_URL'), '/');
+    $key = (string)env('SUPABASE_SERVER_KEY');
+    $ch = curl_init($base . '/storage/v1/object/' . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => 'DELETE',
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $key,
+            'apikey: ' . $key,
+        ],
+        CURLOPT_TIMEOUT => 30,
+    ]);
+    $raw = curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($raw === false || $status < 200 || $status >= 300) {
+        throw new RuntimeException('Não foi possível remover a foto.');
+    }
+}
+
 function friendly_api_error(Throwable $e): string {
     $message = $e->getMessage();
     if (stripos($message, 'duplicate') !== false || stripos($message, 'unique') !== false) {
