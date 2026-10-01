@@ -5,3 +5,5 @@ fotos/*
 .vscode/
 *.log
 .DS_Store
+.env
+.env.*
