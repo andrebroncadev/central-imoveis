@@ -1,7 +1,13 @@
 <?php
 declare(strict_types=1);
 
-session_save_path('/tmp/php-sessions');
+$sessionPath = '/tmp/php-sessions';
+if (!is_dir($sessionPath)) {
+    @mkdir($sessionPath, 0770, true);
+}
+if (is_dir($sessionPath) && is_writable($sessionPath)) {
+    session_save_path($sessionPath);
+}
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
