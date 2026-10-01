@@ -50,8 +50,8 @@ require_login();
 </div>
 
 <section class="fotos-editor">
-<div class="secao-titulo"><div><span class="eyebrow">IMAGENS</span><h2>Fotos do imóvel</h2><p>Adicione algumas fotos para deixar a ficha completa.</p></div></div>
-<label class="upload-box"><span class="upload-icone">＋</span><span><strong>Escolher fotos</strong><small>JPG, PNG ou WEBP · até 10 MB por foto</small></span><input type="file" name="fotos[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple></label>
+<div class="secao-titulo"><div><span class="eyebrow">IMAGENS</span><h2>Fotos do imóvel</h2><p>As fotos completas ficam no Cloudinary; o Central guarda apenas os links e a capa.</p></div></div>
+<label class="upload-box"><span class="upload-icone">＋</span><span><strong>Escolher fotos</strong><small>JPG, PNG, WEBP ou GIF · até 100 MB por foto · até 100 fotos por envio</small></span><input type="file" name="fotos[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple></label>
 </section>
 <label>Diária base<input type="number" name="diaria" min="0" step="0.01" value="0"></label>
 <label>Descrição<textarea name="descricao" rows="7" placeholder="Características, observações e informações úteis para atendimento."></textarea></label>
