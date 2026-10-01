@@ -143,11 +143,65 @@ function property_data(array $input): array {
     ];
 }
 
-function upload_property_photos(int $propertyId, array $files): array {
-    $base = rtrim((string)env('SUPABASE_URL'), '/');
-    $key = (string)env('SUPABASE_SERVER_KEY');
-    if ($base === '' || $key === '') throw new RuntimeException('Storage não está configurado.');
+function cloudinary_signature(array $params, string $secret): string {
+    ksort($params);
+    $parts = [];
+    foreach ($params as $key => $value) {
+        if ($value === null || $value === '') continue;
+        $parts[] = $key . '=' . $value;
+    }
+    return sha1(implode('&', $parts) . $secret);
+}
 
+function cloudinary_request(array $params, string $filePath, string $mime): array {
+    $cloud = (string)env('CLOUDINARY_CLOUD_NAME');
+    $key = (string)env('CLOUDINARY_API_KEY');
+    $secret = (string)env('CLOUDINARY_API_SECRET');
+
+    if ($cloud === '' || $key === '' || $secret === '') {
+        throw new RuntimeException('Cloudinary não está configurado no servidor.');
+    }
+
+    $timestamp = time();
+    $params['timestamp'] = $timestamp;
+    $params['api_key'] = $key;
+    $params['signature'] = cloudinary_signature(
+        array_filter($params, static fn($value) => $value !== null && $value !== ''),
+        $secret
+    );
+
+    $post = [];
+    foreach ($params as $name => $value) $post[$name] = $value;
+    $post['file'] = new CURLFile($filePath, $mime, basename($filePath));
+
+    $ch = curl_init('https://api.cloudinary.com/v1_1/' . rawurlencode($cloud) . '/image/upload');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $post,
+        CURLOPT_TIMEOUT => 120,
+        CURLOPT_CONNECTTIMEOUT => 10,
+    ]);
+    $raw = curl_exec($ch);
+    $error = curl_error($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+
+    if ($raw === false || $status < 200 || $status >= 300) {
+        $detail = is_string($raw) ? json_decode($raw, true) : null;
+        $message = is_array($detail) ? ($detail['error']['message'] ?? '') : '';
+        throw new RuntimeException($message ?: ($error ?: 'Falha ao enviar a foto para o Cloudinary.'));
+    }
+
+    $result = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+    return [
+        'public_id' => (string)($result['public_id'] ?? ''),
+        'url' => (string)($result['secure_url'] ?? ''),
+        'format' => (string)($result['format'] ?? ''),
+    ];
+}
+
+function upload_property_photos(int $propertyId, array $files): array {
     $allowed = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
@@ -161,8 +215,12 @@ function upload_property_photos(int $propertyId, array $files): array {
     $count = count($files['name']);
     for ($i = 0; $i < $count; $i++) {
         if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
-        if (($files['error'][$i] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) throw new RuntimeException('Uma das fotos não pôde ser enviada.');
-        if (($files['size'][$i] ?? 0) > 10 * 1024 * 1024) throw new RuntimeException('Cada foto pode ter no máximo 10 MB.');
+        if (($files['error'][$i] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Uma das fotos não pôde ser enviada.');
+        }
+        if (($files['size'][$i] ?? 0) > 10 * 1024 * 1024) {
+            throw new RuntimeException('Cada foto pode ter no máximo 10 MB.');
+        }
 
         $tmp = $files['tmp_name'][$i] ?? '';
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmp);
@@ -170,67 +228,85 @@ function upload_property_photos(int $propertyId, array $files): array {
             throw new RuntimeException('Envie apenas fotos JPG, PNG, WEBP ou GIF.');
         }
 
-        $path = 'imoveis/' . $propertyId . '/' . bin2hex(random_bytes(12)) . '.' . $allowed[$mime];
-        $binary = file_get_contents($tmp);
-        if ($binary === false) throw new RuntimeException('Não foi possível ler uma das fotos.');
+        $folder = 'central-imoveis/imoveis/' . $propertyId;
+        $publicId = 'foto-' . bin2hex(random_bytes(12));
 
-        $ch = curl_init($base . '/storage/v1/object/' . $path);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $key,
-                'apikey: ' . $key,
-                'Content-Type: ' . $mime,
-                'Cache-Control: max-age=31536000',
-                'x-upsert: false',
-            ],
-            CURLOPT_POSTFIELDS => $binary,
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_CONNECTTIMEOUT => 10,
-        ]);
-        $raw = curl_exec($ch);
-        $error = curl_error($ch);
-        $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
+        $uploadedPhoto = cloudinary_request([
+            'folder' => $folder,
+            'public_id' => $publicId,
+        ], $tmp, $mime);
 
-        if ($raw === false || $status < 200 || $status >= 300) {
-            $detail = is_string($raw) ? json_decode($raw, true) : null;
-            $message = is_array($detail) ? ($detail['message'] ?? $detail['error'] ?? '') : '';
-            throw new RuntimeException($message ?: ($error ?: 'Falha ao enviar uma foto.'));
+        if ($uploadedPhoto['public_id'] === '' || $uploadedPhoto['url'] === '') {
+            throw new RuntimeException('O Cloudinary não retornou os dados da foto.');
         }
 
-        $uploaded[] = [
-            'path' => $path,
-            'url' => $base . '/storage/v1/object/public/' . $path,
-        ];
+        $uploaded[] = $uploadedPhoto;
     }
 
     return $uploaded;
 }
 
 function delete_property_photo(string $path): void {
-    if (!preg_match('#^imoveis/[0-9]+/[a-f0-9]{24}\.(jpg|png|webp|gif)$#', $path)) {
-        throw new RuntimeException('Foto inválida.');
+    if (preg_match('#^imoveis/[0-9]+/[a-f0-9]{24}\.(jpg|png|webp|gif)$#', $path)) {
+        $base = rtrim((string)env('SUPABASE_URL'), '/');
+        $key = (string)env('SUPABASE_SERVER_KEY');
+        if ($base === '' || $key === '') throw new RuntimeException('Storage não está configurado.');
+
+        $ch = curl_init($base . '/storage/v1/object/' . $path);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => 'DELETE',
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $key,
+                'apikey: ' . $key,
+            ],
+            CURLOPT_TIMEOUT => 30,
+        ]);
+        $raw = curl_exec($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        if ($raw === false || $status < 200 || $status >= 300) {
+            throw new RuntimeException('Não foi possível remover a foto.');
+        }
+        return;
     }
 
-    $base = rtrim((string)env('SUPABASE_URL'), '/');
-    $key = (string)env('SUPABASE_SERVER_KEY');
-    $ch = curl_init($base . '/storage/v1/object/' . $path);
+    $cloud = (string)env('CLOUDINARY_CLOUD_NAME');
+    $key = (string)env('CLOUDINARY_API_KEY');
+    $secret = (string)env('CLOUDINARY_API_SECRET');
+    if ($cloud === '' || $key === '' || $secret === '') {
+        throw new RuntimeException('Cloudinary não está configurado no servidor.');
+    }
+
+    $timestamp = time();
+    $params = [
+        'public_id' => $path,
+        'timestamp' => $timestamp,
+    ];
+    $post = [
+        'public_id' => $path,
+        'timestamp' => $timestamp,
+        'api_key' => $key,
+        'signature' => cloudinary_signature($params, $secret),
+    ];
+
+    $ch = curl_init('https://api.cloudinary.com/v1_1/' . rawurlencode($cloud) . '/image/destroy');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CUSTOMREQUEST => 'DELETE',
-        CURLOPT_HTTPHEADER => [
-            'Authorization: Bearer ' . $key,
-            'apikey: ' . $key,
-        ],
-        CURLOPT_TIMEOUT => 30,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $post,
+        CURLOPT_TIMEOUT => 60,
+        CURLOPT_CONNECTTIMEOUT => 10,
     ]);
     $raw = curl_exec($ch);
+    $error = curl_error($ch);
     $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
+
     if ($raw === false || $status < 200 || $status >= 300) {
-        throw new RuntimeException('Não foi possível remover a foto.');
+        $detail = is_string($raw) ? json_decode($raw, true) : null;
+        $message = is_array($detail) ? ($detail['error']['message'] ?? '') : '';
+        throw new RuntimeException($message ?: ($error ?: 'Não foi possível remover a foto do Cloudinary.'));
     }
 }
 
