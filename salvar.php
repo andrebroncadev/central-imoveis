@@ -5,6 +5,7 @@ require_post();
 verify_csrf();
 
 $data = property_data($_POST);
+if (($data['latitude'] ?? null) === null || ($data['longitude'] ?? null) === null) { $geo = geocode_address((string)($data['endereco'] ?? ''),(string)($data['bairro'] ?? '')); if ($geo) { $data['latitude']=$geo['latitude']; $data['longitude']=$geo['longitude']; } }
 if ($data['codigo'] === '' || $data['nome'] === '') {
     if (($_POST['ajax'] ?? '') === '1') { http_response_code(422); header('Content-Type: application/json'); echo json_encode(['ok'=>false,'error'=>'Código e nome são obrigatórios.']); exit; }
     flash('error','Código e nome são obrigatórios.'); redirect('cadastrar.php');
