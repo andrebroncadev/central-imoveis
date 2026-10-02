@@ -14,6 +14,6 @@ $p=profile_data();
 <div class="grid"><label>Telefone<input name="telefone" maxlength="30" value="<?=e($p['telefone']??'')?>" placeholder="Opcional"></label><label>Bio curta<input name="bio" maxlength="250" value="<?=e($p['bio']??'')?>"></label></div>
 <div class="acoes-form"><button class="botao" type="submit">Salvar perfil</button></div>
 </form>
-<div class="profile-upload"><div><strong>Foto do perfil</strong><p>Ela será usada no rodapé do sistema.</p></div><form action="upload_perfil.php" method="POST" enctype="multipart/form-data"><?=csrf_field()?><label class="upload-box"><span class="upload-icone">◎</span><span><strong>Escolher foto</strong><small>JPG, PNG ou WEBP</small></span><input type="file" name="foto" accept="image/jpeg,image/png,image/webp" required></label><button class="botao" type="submit">Enviar foto</button></form></div>
+<div class="profile-upload"><div><strong>Foto do perfil</strong><p>Ela será usada no rodapé do sistema.</p></div><form action="upload_perfil.php" method="POST" enctype="multipart/form-data"><?=csrf_field()?><label class="upload-box"><span class="upload-icone">◎</span><span><strong>Escolher foto</strong><small>JPG, PNG ou WEBP</small></span><input type="file" name="foto" accept="image/jpeg,image/png,image/webp" required></label><button class="botao" type="submit">Enviar foto</button></form></div><div class="profile-account"><a class="botao perigo" href="logout.php">Sair da conta</a></div>
 </section>
 <?php render_footer(); ?></main></body></html>
