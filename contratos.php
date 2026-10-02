@@ -64,7 +64,7 @@ $propId=(int)($_GET['proprietario']??0);$imovelId=(int)($_GET['imovel']??0);
 
     <div class="form-bottom">
       <span></span>
-      <button class="botao" type="submit" id="continueBtn">Continuar para o contrato →</button>
+      <button class="botao" type="button" id="continueBtn">Gerar contrato →</button>
     </div>
   </form>
 </section>
@@ -85,7 +85,7 @@ $propId=(int)($_GET['proprietario']??0);$imovelId=(int)($_GET['imovel']??0);
           <p><?=e($c['data_contrato']?:'Data não informada')?></p>
         </div>
         <div class="resumo"><span><?=e($c['status'])?></span><span>R$ <?=number_format((float)$c['valor_locacao'],2,',','.')?></span></div>
-        <div class="acoes"><a class="botao secundario" href="contratos.php?imovel=<?=(int)$c['imovel_id']?>">Usar imóvel</a></div>
+        <div class="acoes"><a class="botao secundario" href="contrato.php?imovel_id=<?=(int)$c['imovel_id']?><?php if(!empty($c['proprietario_id'])):?>&proprietario_id=<?=(int)$c['proprietario_id']?><?php endif;?>">Abrir contrato</a><a class="botao secundario" href="contratos.php?imovel=<?=(int)$c['imovel_id']?>">Usar imóvel</a></div>
       </article>
     <?php endforeach; endif;?>
   </section>
