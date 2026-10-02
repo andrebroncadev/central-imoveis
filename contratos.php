@@ -2,7 +2,7 @@
 require_once __DIR__.'/app.php'; require_login(); require_once __DIR__.'/ui.php';
 $imoveis=supabase_request('GET','/rest/v1/imoveis?select=id,codigo,nome,proprietario_id,proprietario&order=nome.asc');$imoveis=is_array($imoveis)?$imoveis:[];
 $owners=supabase_request('GET','/rest/v1/proprietarios?select=id,nome,tipo&order=nome.asc');$owners=is_array($owners)?$owners:[];
-$ownerMap=[];foreach($owners as $o)$ownerMap[(int)$o['id']=$o;
+
 $contracts=supabase_request('GET','/rest/v1/contratos?select=id,imovel_id,proprietario_id,locatario_nome,data_contrato,checkin,checkout,valor_locacao,status,created_at&order=id.desc');$contracts=is_array($contracts)?$contracts:[];
 $propId=(int)($_GET['proprietario']??0);$imovelId=(int)($_GET['imovel']??0);
 ?><!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contratos · Central Imóveis</title><link rel="stylesheet" href="css/style.css"></head><body><main class="container"><header class="topo"><div><span class="eyebrow">CENTRAL IMÓVEIS</span><h1>Contratos</h1><p>Monte um contrato a partir de um imóvel e do proprietário já cadastrados.</p></div><?php render_nav('contratos'); ?></header>
