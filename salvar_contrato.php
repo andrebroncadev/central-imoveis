@@ -1,0 +1,9 @@
+<?php
+require_once __DIR__.'/app.php';require_login();require_post();verify_csrf();
+$imovelId=filter_input(INPUT_POST,'imovel_id',FILTER_VALIDATE_INT);$ownerId=filter_input(INPUT_POST,'proprietario_id',FILTER_VALIDATE_INT);
+if(!$imovelId){flash('error','Selecione um imóvel.');redirect('contratos.php');}
+$property=supabase_request('GET','/rest/v1/imoveis?select=id,proprietario_id&id=eq.'.$imovelId.'&limit=1');$property=$property[0]??null;if(!$property){flash('error','Imóvel não encontrado.');redirect('contratos.php');}
+if(!$ownerId)$ownerId=(int)($property['proprietario_id']??0)?:null;
+$data=['imovel_id'=>$imovelId,'proprietario_id'=>$ownerId?:null,'locatario_nome'=>trim((string)($_POST['locatario_nome']??''))?:null,'locatario_cpf'=>trim((string)($_POST['locatario_cpf']??''))?:null,'locatario_email'=>trim((string)($_POST['locatario_email']??''))?:null,'locatario_telefone'=>trim((string)($_POST['locatario_telefone']??''))?:null,'data_contrato'=>($_POST['data_contrato']??'')?:null,'checkin'=>($_POST['checkin']??'')?:null,'checkout'=>($_POST['checkout']??'')?:null,'valor_locacao'=>max(0,(float)($_POST['valor_locacao']??0)),'taxa_faxina'=>max(0,(float)($_POST['taxa_faxina']??0)),'caucao'=>max(0,(float)($_POST['caucao']??0)),'comissao_pct'=>max(0,(float)($_POST['comissao_pct']??10)),'status'=>'rascunho'];
+try{supabase_request('POST','/rest/v1/contratos',$data,['Prefer'=>'return=minimal']);flash('success','Rascunho de contrato salvo.');redirect('contratos.php?imovel='.$imovelId);}catch(Throwable $e){flash('error',friendly_api_error($e));redirect('contratos.php?imovel='.$imovelId);}
+?>
