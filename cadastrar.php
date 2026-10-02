@@ -7,7 +7,7 @@
 <?=csrf_field()?>
 <section class="form-card"><div class="form-card-title"><span>01</span><div><strong>Identificação</strong><small>Como o imóvel aparece na Central.</small></div></div>
 <div class="grid"><label>Código *<input name="codigo" required maxlength="50" placeholder="Ex.: JQY-001"></label><label>Nome do imóvel *<input name="nome" required maxlength="150" placeholder="Ex.: Casa Juquehy"></label></div>
-<label>Proprietário<input name="proprietario" maxlength="150" placeholder="Nome do proprietário"></label></section>
+<label>Proprietário<select name="proprietario_id"><option value="">Selecionar depois</option><?php $owners=supabase_request('GET','/rest/v1/proprietarios?select=id,nome,tipo&order=nome.asc'); foreach((array)$owners as $owner): ?><option value="<?= (int)$owner['id'] ?>"><?= e($owner['nome']) ?><?= ($owner['tipo']??'pf')==='pj'?' · PJ':'' ?></option><?php endforeach; ?></select></label><input type="hidden" name="proprietario" value=""></section>
 
 <section class="form-card"><div class="form-card-title"><span>02</span><div><strong>Endereço inteligente</strong><small>Digite o CEP e o sistema completa os dados automaticamente.</small></div></div>
 <div class="cep-row"><label>CEP<input id="cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"><small id="cepStatus" class="field-status">Consulta automática pelo ViaCEP.</small></label><button id="cepBtn" class="botao secundario cep-btn" type="button">Buscar CEP</button></div>
