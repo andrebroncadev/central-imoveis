@@ -5,18 +5,115 @@ $owners=supabase_request('GET','/rest/v1/proprietarios?select=id,nome,tipo&order
 
 $contracts=supabase_request('GET','/rest/v1/contratos?select=id,imovel_id,proprietario_id,locatario_nome,data_contrato,checkin,checkout,valor_locacao,status,created_at&order=id.desc');$contracts=is_array($contracts)?$contracts:[];
 $propId=(int)($_GET['proprietario']??0);$imovelId=(int)($_GET['imovel']??0);
-?><!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contratos · Central Imóveis</title><link rel="stylesheet" href="css/style.css"></head><body><main class="container"><header class="topo"><div><span class="eyebrow">CENTRAL IMÓVEIS</span><h1>Contratos</h1><p>Monte um contrato a partir de um imóvel e do proprietário já cadastrados.</p></div><?php render_nav('contratos'); ?></header>
-<?php if($imoveis): ?><div class="contract-property-strip"><span>Gerar contrato a partir de:</span><div class="contract-property-links"><?php foreach($imoveis as $p): ?><a href="contrato.php?imovel_id=<?=(int)$p['id']?>"><?=e($p['codigo'])?> · <?=e($p['nome'])?></a><?php endforeach; ?></div></div><?php endif; ?>
-<?php if($m=flash('success')):?><div class="alerta sucesso"><?=e($m)?></div><?php endif;?><?php if($m=flash('error')):?><div class="alerta erro"><?=e($m)?></div><?php endif;?>
-<section class="form-card"><div class="form-card-title"><span>01</span><div><strong>Base do contrato</strong><small>O imóvel e o proprietário são objetos do Central — não precisam ser digitados novamente.</small></div></div><form action="salvar_contrato.php" method="POST" class="formulario"><?=csrf_field()?><div class="grid"><label>Imóvel<select name="imovel_id" id="imovel_id" required><option value="">Selecione o imóvel</option><?php foreach($imoveis as $p):?><option value="<?=(int)$p['id']?>" data-owner="<?=(int)($p['proprietario_id']??0)?>" <?=($imovelId===(int)$p['id'])?'selected':''?>><?=e($p['codigo'])?> · <?=e($p['nome'])?></option><?php endforeach;?></select></label><label>Proprietário<input id="ownerDisplay" value="" readonly><input type="hidden" name="proprietario_id" id="proprietario_id" value="<?=($propId?:'')?>"></label></div>
-<div id="ownerPreview" class="location-note">Selecione um imóvel para carregar o proprietário vinculado.</div></section>
-<section class="form-card"><div class="form-card-title"><span>02</span><div><strong>Locatário</strong><small>Esses são os dados que normalmente mudam de contrato para contrato.</small></div></div><div class="grid"><label>Nome completo<input name="locatario_nome"></label><label>CPF<input name="locatario_cpf"></label><label>E-mail<input type="email" name="locatario_email"></label><label>Telefone<input name="locatario_telefone"></label></div></section>
-<section class="form-card"><div class="form-card-title"><span>03</span><div><strong>Condições</strong><small>Base para o contrato e para o futuro gerador integrado.</small></div></div><div class="grid"><label>Data do contrato<input type="date" name="data_contrato" value="<?=date('Y-m-d')?>"></label><label>Check-in<input type="date" name="checkin"></label><label>Check-out<input type="date" name="checkout"></label><label>Valor da locação (R$)<input type="number" step="0.01" min="0" name="valor_locacao"></label><label>Taxa de faxina (R$)<input type="number" step="0.01" min="0" name="taxa_faxina" value="350"></label><label>Caução (R$)<input type="number" step="0.01" min="0" name="caucao" value="2000"></label><label>Comissão (%)<input type="number" step="0.1" min="0" name="comissao_pct" value="10"></label></div></section>
-<div class="form-bottom"><a class="botao secundario" href="index.php">Cancelar</a><button class="botao" type="submit">Salvar rascunho</button></div></form>
+?><!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contratos · Central Imóveis</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<main class="container">
+<header class="topo">
+  <div><span class="eyebrow">CENTRAL IMÓVEIS</span><h1>Contratos</h1><p>Crie, acompanhe e reutilize contratos a partir dos cadastros da Central.</p></div>
+  <?php render_nav('contratos'); ?>
+</header>
+
+<?php if($m=flash('success')):?><div class="alerta sucesso"><?=e($m)?></div><?php endif;?>
+<?php if($m=flash('error')):?><div class="alerta erro"><?=e($m)?></div><?php endif;?>
+
+<section class="form-card contract-start">
+  <div class="form-card-title">
+    <span>01</span>
+    <div><strong>Novo contrato</strong><small>Escolha um imóvel já cadastrado. O proprietário vinculado é carregado automaticamente.</small></div>
+  </div>
+
+  <form action="salvar_contrato.php" method="POST" class="formulario">
+    <?=csrf_field()?>
+    <div class="grid">
+      <label>Imóvel
+        <select name="imovel_id" id="imovel_id" required>
+          <option value="">Selecione um imóvel</option>
+          <?php foreach($imoveis as $p):?>
+            <option value="<?=(int)$p['id']?>" data-owner="<?=(int)($p['proprietario_id']??0)?>" <?=($imovelId===(int)$p['id'])?'selected':''?>>
+              <?=e($p['codigo'])?> · <?=e($p['nome'])?>
+            </option>
+          <?php endforeach;?>
+        </select>
+      </label>
+      <div class="field-action">
+        <span class="field-label">Cadastro de imóvel</span>
+        <a class="botao secundario" href="cadastrar.php">+ Cadastrar imóvel</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <label>Proprietário
+        <select name="proprietario_id" id="proprietario_id">
+          <option value="">Selecionar proprietário</option>
+          <?php foreach($owners as $o):?>
+            <option value="<?=(int)$o['id']?>" <?=($propId===(int)$o['id'])?'selected':''?>>
+              <?=e($o['nome'])?><?=($o['tipo']??'pf')==='pj'?' · PJ':''?>
+            </option>
+          <?php endforeach;?>
+        </select>
+      </label>
+      <div class="field-action">
+        <span class="field-label">Cadastro de proprietário</span>
+        <a class="botao secundario" href="cadastrar_proprietario.php">+ Cadastrar proprietário</a>
+      </div>
+    </div>
+
+    <div id="ownerPreview" class="location-note">Selecione um imóvel para carregar o proprietário vinculado. Você pode trocar pelo cadastro de outro proprietário se necessário.</div>
+
+    <div class="form-bottom">
+      <span></span>
+      <button class="botao" type="submit" id="continueBtn">Continuar para o contrato →</button>
+    </div>
+  </form>
 </section>
-<section class="cabecalho-lista"><div><h2>Histórico</h2><p><?=count($contracts)?> contrato(s)</p></div></section><section class="lista"><?php foreach($contracts as $c):?><article class="card"><div class="card-principal"><div class="codigo">CONTRATO #<?=e($c['id'])?></div><h3><?=e($c['locatario_nome']?:'Sem locatário')?></h3><p><?=e($c['data_contrato']?:'Data não informada')?></p></div><div class="resumo"><span><?=e($c['status'])?></span><span>R$ <?=number_format((float)$c['valor_locacao'],2,',','.')?></span></div><div class="acoes"><a class="botao secundario" href="contratos.php?imovel=<?=(int)$c['imovel_id']?>">Usar imóvel</a></div></article><?php endforeach;?></section><?php render_footer();?></main>
+
+<section class="form-card">
+  <div class="form-card-title">
+    <span>02</span>
+    <div><strong>Contratos feitos</strong><small>Histórico dos contratos salvos na Central.</small></div>
+  </div>
+  <section class="lista">
+    <?php if(!$contracts):?>
+      <div class="vazio"><h2>Nenhum contrato ainda</h2><p>O primeiro começa pelo botão acima.</p></div>
+    <?php else: foreach($contracts as $c):?>
+      <article class="card">
+        <div class="card-principal">
+          <div class="codigo">CONTRATO #<?=e($c['id'])?></div>
+          <h3><?=e($c['locatario_nome']?:'Sem locatário')?></h3>
+          <p><?=e($c['data_contrato']?:'Data não informada')?></p>
+        </div>
+        <div class="resumo"><span><?=e($c['status'])?></span><span>R$ <?=number_format((float)$c['valor_locacao'],2,',','.')?></span></div>
+        <div class="acoes"><a class="botao secundario" href="contratos.php?imovel=<?=(int)$c['imovel_id']?>">Usar imóvel</a></div>
+      </article>
+    <?php endforeach; endif;?>
+  </section>
+</section>
+
+<?php render_footer();?>
+</main>
 <script>
-const owners=<?=json_encode($owners,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)?>;const pi=document.getElementById('imovel_id'),po=document.getElementById('proprietario_id'),od=document.getElementById('ownerDisplay'),prev=document.getElementById('ownerPreview');
-function syncOwner(){const opt=pi.options[pi.selectedIndex],id=Number(opt?.dataset?.owner||0);if(id){po.value=String(id);const o=owners.find(x=>Number(x.id)===id);od.value=o?o.nome:'Proprietário não encontrado';prev.textContent=o?'Proprietário vinculado ao imóvel: '+o.nome:'Este imóvel possui um vínculo de proprietário inválido.';}else{po.value='';od.value='';prev.textContent='Este imóvel ainda não possui proprietário vinculado. Cadastre/vincule o proprietário antes de gerar o contrato.';}}
-pi.addEventListener('change',syncOwner);syncOwner();
-</script></body></html>
+const owners=<?=json_encode($owners,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)?>;
+const pi=document.getElementById('imovel_id');
+const po=document.getElementById('proprietario_id');
+const prev=document.getElementById('ownerPreview');
+
+function syncOwner(){
+  const opt=pi.options[pi.selectedIndex];
+  const id=Number(opt?.dataset?.owner||0);
+  if(id){
+    po.value=String(id);
+    const o=owners.find(x=>Number(x.id)===id);
+    prev.textContent=o
+      ? 'Proprietário vinculado ao imóvel: '+o.nome+'. Se precisar, troque no campo acima.'
+      : 'O imóvel aponta para um proprietário que não foi encontrado.';
+  }else{
+    if(!<?=json_encode($propId>0)?>) po.value='';
+    prev.textContent='Selecione um imóvel para carregar o proprietário vinculado. Você pode trocar pelo cadastro de outro proprietário se necessário.';
+  }
+}
+pi.addEventListener('change',syncOwner);
+syncOwner();
+</script>
+</body></html>
