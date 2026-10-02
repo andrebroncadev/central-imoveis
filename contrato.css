@@ -1,0 +1,33 @@
+/* Central Imóveis — contrato: editorial, leve e sem aparência de template */
+.central-contract-shell{max-width:1160px;margin:0 auto;padding:16px 18px 0}
+.central-contract-nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:0 0 12px;font-size:12px;color:var(--muted)}
+.central-contract-nav a{font-weight:800;color:var(--text)}
+.central-contract-nav a:hover{color:var(--accent)}
+body{background:var(--bg)}
+.app{max-width:1160px;padding-top:18px}
+.topbar{padding:0 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.topbar h1{font-size:32px;letter-spacing:-.045em}
+.topbar p{font-size:12px}
+.card{border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;margin:0;background:transparent}
+.card:first-of-type{border-top:1px solid var(--line)}
+.card-title{padding:19px 2px 12px;border:0}
+.card-title h2{font-size:15px;letter-spacing:-.015em}
+.card-title span{font-size:11px}
+.card-body{padding:0 2px 22px}
+.field label{font-size:10px;text-transform:uppercase;letter-spacing:.045em;color:var(--muted)}
+.field input,.field select,.field textarea{border:0;border-bottom:1px solid #cfd5da;border-radius:0;padding:9px 2px;background:transparent}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:none}
+.toggle-row{margin-bottom:10px}
+.pill{border-radius:5px;padding:7px 10px;font-size:11px}
+.pill.active{background:var(--text);border-color:var(--text);color:#fff}
+.summary,.bank-card,.installment,.notice{border-radius:0;box-shadow:none}
+.summary{background:transparent;border:0;border-top:2px solid var(--text);padding:9px 2px}
+.summary span{font-size:9px;color:var(--muted)}
+.summary strong{font-size:18px;color:var(--text)}
+.bank-card{background:transparent;padding:12px 0;border:0;border-top:1px solid var(--line)}
+.installment{background:transparent;border:1px solid var(--line);padding:13px;border-radius:0}
+.btn{border-radius:5px;padding:10px 13px}
+.primary{background:var(--text)}
+.secondary{background:transparent;border:1px solid #bfc7cd}
+.bottom{padding:22px 0 0}
+@media(max-width:600px){.central-contract-shell{padding:12px 10px 0}.topbar h1{font-size:25px}.card-title{padding-top:16px}.card-body{padding-bottom:18px}}
