@@ -15,6 +15,7 @@ $imovel = $rows[0] ?? [];
 $fotos = is_array($imovel['fotos'] ?? null) ? $imovel['fotos'] : [];
 
 $data = property_data($_POST);
+if (($data['latitude'] ?? null) === null || ($data['longitude'] ?? null) === null) { $geo = geocode_address((string)($data['endereco'] ?? ''),(string)($data['bairro'] ?? '')); if ($geo) { $data['latitude']=$geo['latitude']; $data['longitude']=$geo['longitude']; } }
 if ($data['codigo'] === '' || $data['nome'] === '') {
     flash('error', 'Código e nome são obrigatórios.');
     redirect('editar.php?id=' . $id);
