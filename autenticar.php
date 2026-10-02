@@ -37,6 +37,7 @@ if ($supabaseUrl !== '' && $publishableKey !== '') {
         session_regenerate_id(true);
         $_SESSION['admin_user'] = $data['user']['email'] ?? $email;
         $_SESSION['logged_in'] = true;
+        session_write_close();
         redirect('index.php');
     }
 
@@ -56,6 +57,7 @@ if ($email === $expectedUser && $validPassword) {
     session_regenerate_id(true);
     $_SESSION['admin_user'] = $email;
     $_SESSION['logged_in'] = true;
+    session_write_close();
     redirect('index.php');
 }
 
