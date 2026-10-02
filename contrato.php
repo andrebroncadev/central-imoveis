@@ -7,7 +7,9 @@ if(!$imovelId){flash('error','Selecione um imóvel para iniciar o contrato.');re
 $rows=supabase_request('GET','/rest/v1/imoveis?select=*&id=eq.'.$imovelId.'&limit=1');$imovel=$rows[0]??null;
 if(!$imovel){flash('error','Imóvel não encontrado.');redirect('contratos.php');}
 $owner=null;
-if(!empty($imovel['proprietario_id'])){$or=supabase_request('GET','/rest/v1/proprietarios?select=*&id=eq.'.(int)$imovel['proprietario_id'].'&limit=1');$owner=$or[0]??null;}
+$requestedOwnerId=filter_input(INPUT_GET,'proprietario_id',FILTER_VALIDATE_INT);
+$ownerId=$requestedOwnerId ?: (int)($imovel['proprietario_id']??0);
+if($ownerId){$or=supabase_request('GET','/rest/v1/proprietarios?select=*&id=eq.'.$ownerId.'&limit=1');$owner=$or[0]??null;}
 $prefill=[
   'ownerType'=>($owner['tipo']??'pf')==='pj'?'pj':'pf',
   'owner'=>[
