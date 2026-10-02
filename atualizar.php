@@ -15,6 +15,7 @@ $imovel = $rows[0] ?? [];
 $fotos = is_array($imovel['fotos'] ?? null) ? $imovel['fotos'] : [];
 
 $data = property_data($_POST);
+if (!empty($data['proprietario_id'])) { $ownerRows=supabase_request('GET','/rest/v1/proprietarios?select=nome&id=eq.'.(int)$data['proprietario_id'].'&limit=1'); $data['proprietario']=$ownerRows[0]['nome']??null; }
 if (($data['latitude'] ?? null) === null || ($data['longitude'] ?? null) === null) { $geo = geocode_address((string)($data['endereco'] ?? ''),(string)($data['bairro'] ?? ''),(string)($data['cidade'] ?? 'São Sebastião'),(string)($data['uf'] ?? 'SP')); if ($geo) { $data['latitude']=$geo['latitude']; $data['longitude']=$geo['longitude']; } }
 if ($data['codigo'] === '' || $data['nome'] === '') {
     flash('error', 'Código e nome são obrigatórios.');
