@@ -2,7 +2,7 @@
 declare(strict_types=1);
 $sessionPath='/tmp/php-sessions';
 if(!is_dir($sessionPath)) @mkdir($sessionPath,0770,true);
-if(session_status()!==PHP_SESSION_ACTIVE){if(is_dir($sessionPath)&&is_writable($sessionPath))session_save_path($sessionPath);session_set_cookie_params(['lifetime'=>0,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);session_start();}
+if(session_status()!==PHP_SESSION_ACTIVE){if(is_dir($sessionPath)&&is_writable($sessionPath))session_save_path($sessionPath);$forwarded=strtolower(trim((string)($_SERVER['HTTP_X_FORWARDED_PROTO']??'')));$isHttps=$forwarded==='https'||(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off');session_set_cookie_params(['lifetime'=>0,'path'=>'/','secure'=>$isHttps,'httponly'=>true,'samesite'=>'Lax']);session_start();}
 function env(string $key,?string $default=null):?string{$value=getenv($key);return $value===false?$default:$value;}
 function e(mixed $value):string{return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
 function redirect(string $path):never{header('Location: '.$path);exit;}
