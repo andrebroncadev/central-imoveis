@@ -37,7 +37,7 @@ $galleryUrl = gallery_url((int)$imovel['id']);
 <style>
 :root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17202a;background:#f5f6f8}
 *{box-sizing:border-box}body{margin:0}.wrap{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:28px 0 48px}.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:#68717d}.title{margin:6px 0 4px;font-size:clamp(26px,5vw,42px);line-height:1.05}.sub{margin:0;color:#68717d}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:700;text-decoration:none;cursor:pointer;background:#17202a;color:#fff}.btn.light{background:#fff;color:#17202a;border:1px solid #dfe3e8}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.photo{border:0;padding:0;border-radius:16px;overflow:hidden;background:#ddd;cursor:pointer;aspect-ratio:4/3}.photo img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .2s}.photo:hover img{transform:scale(1.025)}.empty{padding:40px 20px;text-align:center;background:#fff;border-radius:16px;color:#68717d}.viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.viewer.open{display:flex}.viewer img{max-width:96vw;max-height:92vh;object-fit:contain}.close{position:fixed;right:18px;top:14px;border:0;background:#fff;color:#111;border-radius:999px;width:42px;height:42px;font-size:24px;cursor:pointer}.count{position:fixed;left:18px;top:18px;color:#fff;font-weight:700}@media(max-width:700px){.top{display:block}.actions{margin-top:16px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.photo{border-radius:11px}.wrap{width:min(100% - 18px,1180px);padding-top:18px}}
-</style>
+@media print{.actions,.viewer{display:none!important}.wrap{width:100%;padding:0}.photo{break-inside:avoid}.photo img{transform:none!important}}\n</style>
 </head>
 <body>
 <main class="wrap">
@@ -48,7 +48,7 @@ $galleryUrl = gallery_url((int)$imovel['id']);
 <p class="sub"><?= e($imovel['codigo']) ?><?php if (!empty($imovel['bairro'])): ?> · <?= e($imovel['bairro']) ?><?php endif; ?> · <?= count($fotos) ?> foto(s)</p>
 </div>
 <div class="actions">
-<button class="btn" type="button" onclick="shareGallery()">Compartilhar</button>
+<?php if (is_logged_in()): ?><a class="btn" href="download_fotos.php?id=<?= (int)$imovel['id']?>">Baixar ZIP</a><?php endif; ?><?php if (($_GET['modo']??'')==='pdf'): ?><button class="btn" type="button" onclick="window.print()">Imprimir / Salvar PDF</button><?php endif; ?><button class="btn" type="button" onclick="shareGallery()">Compartilhar</button>
 <a class="btn light" href="<?= e($galleryUrl) ?>">Atualizar</a>
 </div>
 </header>
