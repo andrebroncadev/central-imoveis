@@ -1,0 +1,5 @@
+<?php
+require_once __DIR__.'/app.php'; require_login(); require_post(); verify_csrf();
+$id=filter_input(INPUT_POST,'imovel_id',FILTER_VALIDATE_INT);$start=$_POST['data_inicio']??'';$end=$_POST['data_fim']??'';$value=max(0,(float)str_replace(',','.',(string)($_POST['valor']??0)));$status=$_POST['status']??'disponivel';$obs=trim((string)($_POST['observacao']??''))?:null;
+try{if(!$id||!preg_match('/^\d{4}-\d{2}-\d{2}$/',$start)||!preg_match('/^\d{4}-\d{2}-\d{2}$/',$end)||$end<$start)throw new RuntimeException('Informe um período válido.');if(!in_array($status,['disponivel','reservado','bloqueado'],true))throw new RuntimeException('Status inválido.');supabase_request('POST','/rest/v1/disponibilidade',['imovel_id'=>$id,'data_inicio'=>$start,'data_fim'=>$end,'valor'=>$value,'status'=>$status,'observacao'=>$obs],['Prefer: return=minimal']);flash('success','Período adicionado.');}catch(Throwable $e){flash('error',friendly_api_error($e));}redirect('calendario.php?imovel='.$id.'&mes='.rawurlencode($_POST['mes']??date('Y-m')));
+?>
