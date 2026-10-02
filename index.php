@@ -1,70 +1,19 @@
 <?php
 require_once __DIR__.'/app.php';
 require_login();
-$q=trim($_GET['q']??'');
-$bairro=trim($_GET['bairro']??'');
-$ativo=$_GET['ativo']??'1';
-$filters=[];
-if($q!==''){
-    $safe=rawurlencode($q);
-    $filters[]='or=(codigo.ilike.*'.$safe.'*,nome.ilike.*'.$safe.'*,bairro.ilike.*'.$safe.'*,proprietario.ilike.*'.$safe.'*)';
-}
+$q=trim($_GET['q']??''); $bairro=trim($_GET['bairro']??''); $ativo=$_GET['ativo']??'1'; $filters=[];
+if($q!==''){ $safe=rawurlencode($q); $filters[]='or=(codigo.ilike.*'.$safe.'*,nome.ilike.*'.$safe.'*,bairro.ilike.*'.$safe.'*,proprietario.ilike.*'.$safe.'*)'; }
 if($bairro!=='') $filters[]='bairro=ilike.*'.rawurlencode($bairro).'*';
-if($ativo==='1') $filters[]='ativo=eq.true';
-elseif($ativo==='0') $filters[]='ativo=eq.false';
-$propertyQuery='/rest/v1/imoveis?select=*&order=id.desc';
-if($filters) $propertyQuery.='&'.implode('&',$filters);
-$imoveis=supabase_request('GET',$propertyQuery);
-$imoveis=is_array($imoveis)?$imoveis:[];
-$bairros=supabase_request('GET','/rest/v1/imoveis?select=bairro&ativo=eq.true&order=bairro.asc');
-$bairros=is_array($bairros)?$bairros:[];
-$bairros=array_values(array_unique(array_filter(array_map(fn($x)=>trim((string)($x['bairro']??'')),$bairros))));
+if($ativo==='1') $filters[]='ativo=eq.true'; elseif($ativo==='0') $filters[]='ativo=eq.false';
+$propertyQuery='/rest/v1/imoveis?select=*&order=id.desc'; if($filters) $propertyQuery.='&'.implode('&',$filters);
+$imoveis=supabase_request('GET',$propertyQuery); $imoveis=is_array($imoveis)?$imoveis:[];
+$bairros=supabase_request('GET','/rest/v1/imoveis?select=bairro&ativo=eq.true&order=bairro.asc'); $bairros=is_array($bairros)?$bairros:[]; $bairros=array_values(array_unique(array_filter(array_map(fn($x)=>trim((string)($x['bairro']??'')),$bairros))));
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Central Imóveis</title><link rel="stylesheet" href="css/style.css"></head>
-<body>
-<?php require_once __DIR__.'/ui.php'; ?>
-<main class="container">
-<header class="topo">
-<div><span class="eyebrow">CENTRAL IMÓVEIS</span><h1>Imóveis</h1><p>Encontre, consulte e compartilhe os imóveis da Central.</p></div>
-<?php render_nav('imoveis'); ?>
-<div class="top-actions"><span class="usuario"><?=e($_SESSION['admin_user']??'')?></span><a class="botao" href="cadastrar.php" title="Cadastrar um novo imóvel">+ Cadastrar imóvel</a></div>
-</header>
-<?php if($message=flash('success')):?><div class="alerta sucesso"><?=e($message)?></div><?php endif; ?>
-<?php if($message=flash('error')):?><div class="alerta erro"><?=e($message)?></div><?php endif; ?>
-<section class="painel"><form class="filtros" method="GET">
-<div class="campo-busca"><label for="q">Pesquisar</label><input id="q" type="search" name="q" value="<?=e($q)?>" placeholder="Código, imóvel, bairro ou proprietário"></div>
-<div><label for="bairro">Bairro</label><select id="bairro" name="bairro"><option value="">Todos</option><?php foreach($bairros as $item):?><option value="<?=e($item)?>" <?=$bairro===$item?'selected':''?>><?=e($item)?></option><?php endforeach;?></select></div>
-<div><label for="ativo">Status</label><select id="ativo" name="ativo"><option value="1" <?=$ativo==='1'?'selected':''?>>Ativos</option><option value="0" <?=$ativo==='0'?'selected':''?>>Inativos</option><option value="all" <?=$ativo==='all'?'selected':''?>>Todos</option></select></div>
-<button class="botao" type="submit">Filtrar</button><a class="botao secundario" href="index.php">Limpar</a>
-</form></section>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Central Imóveis</title><link rel="stylesheet" href="css/style.css"></head><body>
+<?php require_once __DIR__.'/ui.php'; ?><main class="container"><header class="topo"><div><span class="eyebrow">CENTRAL IMÓVEIS</span><h1>Imóveis</h1><p>Encontre, consulte e compartilhe os imóveis da Central.</p></div><?php render_nav('imoveis'); ?><div class="top-actions"><span class="usuario"><?=e($_SESSION['admin_user']??'')?></span><a class="botao" href="cadastrar.php" title="Cadastrar um novo imóvel">+ Cadastrar imóvel</a></div></header>
+<?php if($message=flash('success')):?><div class="alerta sucesso"><?=e($message)?></div><?php endif;?><?php if($message=flash('error')):?><div class="alerta erro"><?=e($message)?></div><?php endif;?>
+<section class="painel"><form class="filtros" method="GET"><div class="campo-busca"><label for="q">Pesquisar</label><input id="q" type="search" name="q" value="<?=e($q)?>" placeholder="Código, imóvel, bairro ou proprietário"></div><div><label for="bairro">Bairro</label><select id="bairro" name="bairro"><option value="">Todos</option><?php foreach($bairros as $item):?><option value="<?=e($item)?>" <?=$bairro===$item?'selected':''?>><?=e($item)?></option><?php endforeach;?></select></div><div><label for="ativo">Status</label><select id="ativo" name="ativo"><option value="1" <?=$ativo==='1'?'selected':''?>>Ativos</option><option value="0" <?=$ativo==='0'?'selected':''?>>Inativos</option><option value="all" <?=$ativo==='all'?'selected':''?>>Todos</option></select></div><button class="botao" type="submit">Filtrar</button><a class="botao secundario" href="index.php">Limpar</a></form></section>
 <section class="cabecalho-lista"><div><h2>Imóveis</h2><p><?=count($imoveis)?> resultado(s)</p></div><a class="botao secundario" href="mapa.php">Ver no mapa</a></section>
-<?php if(!$imoveis): ?>
-<section class="vazio"><h2>Nenhum imóvel encontrado</h2><p>Ajuste os filtros ou cadastre um novo imóvel.</p><a class="botao" href="cadastrar.php">Cadastrar imóvel</a></section>
-<?php else: ?>
-<section class="lista">
-<?php foreach($imoveis as $imovel):
-$fotos=is_array($imovel['fotos']??null)?$imovel['fotos']:[];
-$fotoPrincipal=null;
-foreach($fotos as $foto){if(($foto['tipo']??'biblioteca')==='capa'){$fotoPrincipal=$foto['url']??null;break;}}
-if(!$fotoPrincipal) $fotoPrincipal=$fotos[0]['url']??null;
-$galleryUrl=!empty($imovel['id'])?gallery_url((int)$imovel['id']:'';
-$whatsText='Olá! Estou consultando o imóvel '.($imovel['codigo']??'').' - '.($imovel['nome']??'').'.';
-if(!empty($imovel['bairro'])) $whatsText.=' Bairro: '.$imovel['bairro'].'.';
-if($galleryUrl) $whatsText .= "\nAnúncio: ".$galleryUrl;
-$whatsUrl='https://wa.me/?text='.rawurlencode($whatsText);
-?>
-<article class="card <?=!($imovel['ativo']??true)?'inativo':''?>">
-<?php if($fotoPrincipal): ?><a class="card-foto" href="<?=e($galleryUrl)?>" target="_blank" rel="noopener" title="Abrir o anúncio deste imóvel"><img src="<?=e($fotoPrincipal)?>" alt="<?=e($imovel['nome'])?>" loading="lazy"></a><?php endif; ?>
-<div class="card-principal"><div class="codigo"><?=e($imovel['codigo'])?></div><h3><?=e($imovel['nome'])?></h3><p><?=e($imovel['bairro']?:'Bairro não informado')?></p></div>
-<div class="resumo"><span><strong><?= (int)($imovel['capacidade']??0)?></strong> pessoas</span><span><strong><?= (int)($imovel['dormitorios']??0)?></strong> dorm.</span><span><strong><?= (int)($imovel['suites']??0)?></strong> suítes</span><?php if(!empty($imovel['piscina'])):?><span>Piscina</span><?php endif;?></div>
-<div class="acoes">
-<?php if($fotos): ?><a class="botao" href="<?=e($galleryUrl)?>" target="_blank" rel="noopener" title="Abrir a página de anúncio com fotos e dados do corretor">Anúncio</a><a class="botao whatsapp" href="<?=e($whatsUrl)?>" target="_blank" rel="noopener" title="Compartilhar o anúncio pelo WhatsApp">WhatsApp</a><?php endif; ?>
-<a class="botao secundario" href="editar_imovel.php?id=<?=(int)$imovel['id']?>" title="Editar dados, fotos e características deste imóvel">Editar</a><a class="botao secundario" href="calendario.php?imovel=<?=(int)$imovel['id']?>" title="Ver disponibilidade e valores deste imóvel">Agenda</a>
-<form action="excluir_imovel.php" method="POST" onsubmit="return confirm('Excluir este imóvel? Todas as referências às fotos serão removidas e esta ação não pode ser desfeita.')"><?=csrf_field()?><input type="hidden" name="id" value="<?=(int)$imovel['id']?>"><button class="botao perigo" type="submit" title="Excluir permanentemente este imóvel">Excluir</button></form>
-</div></article>
-<?php endforeach; ?></section>
-<?php endif; ?>
-<?php render_footer(); ?>
-</main></body></html>
+<?php if(!$imoveis):?><section class="vazio"><h2>Nenhum imóvel encontrado</h2><p>Ajuste os filtros ou cadastre um novo imóvel.</p><a class="botao" href="cadastrar.php">Cadastrar imóvel</a></section><?php else:?><section class="lista">
+<?php foreach($imoveis as $imovel): $fotos=is_array($imovel['fotos']??null)?$imovel['fotos']:[]; $fotoPrincipal=null; foreach($fotos as $foto){if(($foto['tipo']??'biblioteca')==='capa'){$fotoPrincipal=$foto['url']??null;break;}} if(!$fotoPrincipal) $fotoPrincipal=$fotos[0]['url']??null; $galleryUrl=!empty($imovel['id'])?gallery_url((int)$imovel['id']):''; $whatsText='Olá! Estou consultando o imóvel '.($imovel['codigo']??'').' - '.($imovel['nome']??'').'.'; if(!empty($imovel['bairro'])) $whatsText.=' Bairro: '.$imovel['bairro'].'.'; if($galleryUrl) $whatsText .= "\nAnúncio: ".$galleryUrl; $whatsUrl='https://wa.me/?text='.rawurlencode($whatsText);?>
+<article class="card <?=!($imovel['ativo']??true)?'inativo':''?>"><?php if($fotoPrincipal):?><a class="card-foto" href="<?=e($galleryUrl)?>" target="_blank" rel="noopener" title="Abrir o anúncio deste imóvel"><img src="<?=e($fotoPrincipal)?>" alt="<?=e($imovel['nome'])?>" loading="lazy"></a><?php endif;?><div class="card-principal"><div class="codigo"><?=e($imovel['codigo'])?></div><h3><?=e($imovel['nome'])?></h3><p><?=e($imovel['bairro']?:'Bairro não informado')?></p></div><div class="resumo"><span><strong><?= (int)($imovel['capacidade']??0)?></strong> pessoas</span><span><strong><?= (int)($imovel['dormitorios']??0)?></strong> dorm.</span><span><strong><?= (int)($imovel['suites']??0)?></strong> suítes</span><?php if(!empty($imovel['piscina'])):?><span>Piscina</span><?php endif;?></div><div class="acoes"><?php if($fotos):?><a class="botao" href="<?=e($galleryUrl)?>" target="_blank" rel="noopener" title="Abrir a página de anúncio com fotos e dados do corretor">Anúncio</a><a class="botao whatsapp" href="<?=e($whatsUrl)?>" target="_blank" rel="noopener" title="Compartilhar o anúncio pelo WhatsApp">WhatsApp</a><?php endif;?><a class="botao secundario" href="editar_imovel.php?id=<?=(int)$imovel['id']?>" title="Editar dados, fotos e características deste imóvel">Editar</a><a class="botao secundario" href="calendario.php?imovel=<?=(int)$imovel['id']?>" title="Ver disponibilidade e valores deste imóvel">Agenda</a><form action="excluir_imovel.php" method="POST" onsubmit="return confirm('Excluir este imóvel? Todas as referências às fotos serão removidas e esta ação não pode ser desfeita.')"><?=csrf_field()?><input type="hidden" name="id" value="<?=(int)$imovel['id']?>"><button class="botao perigo" type="submit" title="Excluir permanentemente este imóvel">Excluir</button></form></div></article><?php endforeach;?></section><?php endif;?><?php render_footer();?></main></body></html>
